@@ -25,23 +25,23 @@ args = [
     f'--add-data={os.path.join(ROOT_DIR, "brain_batch_alpha.py")}{os.pathsep}.',
     '--clean',
     '--noconfirm',
-    '--target-architecture=universal2',  # 支持 Intel 和 M1 芯片
-    '--codesign-identity=-',
     f'--distpath={mac_dist_dir}',
     f'--workpath={os.path.join(mac_dir, "build")}',
     f'--specpath={mac_dir}'
 ]
 
 # 如果有Mac图标文件，添加图标
-if os.path.exists(os.path.join(mac_dir, 'icon.icns')):
-    args.append(f'--icon={os.path.join(mac_dir, "icon.icns")}')
+icon_path = os.path.join(mac_dir, 'icon.icns')
+if os.path.exists(icon_path):
+    args.append(f'--icon={icon_path}')
 
-# 运行打包命令
-PyInstaller.__main__.run(args)
-
-# 打包完成后，复制或创建配置文件到dist目录
-print("\n正在处理配置文件...")
 try:
+    # 运行打包命令
+    PyInstaller.__main__.run(args)
+
+    # 打包完成后，复制或创建配置文件到dist目录
+    print("\n正在处理配置文件...")
+    
     # 处理认证文件
     credentials_src = os.path.join(ROOT_DIR, 'brain_credentials.txt')
     if os.path.exists(credentials_src):
@@ -62,17 +62,8 @@ try:
             pass
         print("✅ 创建了空的 alpha_ids.txt")
         
-    # 创建运行说明文件
-    with open(os.path.join(mac_dist_dir, 'README_MAC.txt'), 'w') as f:
-        f.write('''Mac版本使用说明：
-1. 打开终端 (Terminal)
-2. 进入程序所在目录：cd 程序所在路径
-3. 添加执行权限：chmod +x Alpha_Tool
-4. 运行程序：./Alpha_Tool
-        ''')
-    print("✅ 创建了使用说明文件")
-        
+    print(f"\n✅ Mac版本打包完成! 文件位于 {mac_dist_dir}")
+    
 except Exception as e:
-    print(f"❌ 处理配置文件时出错: {str(e)}")
-
-print(f"\n✅ Mac版本打包完成! 文件位于 {mac_dist_dir}") 
+    print(f"\n❌ 打包过程出错: {str(e)}")
+    sys.exit(1) 
