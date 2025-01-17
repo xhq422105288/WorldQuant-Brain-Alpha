@@ -1,0 +1,61 @@
+name: Build Mac App
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pillow
+        
+    - name: Create icon
+      run: |
+        cd mac
+        python create_icns.py
+        
+    - name: Build Mac app
+      run: |
+        cd mac
+        python build_mac.py
+        
+    - name: Package release
+      run: |
+        cd mac/dist
+        zip -r ../../Alpha_Tool_Mac.zip ./*
+        
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ github.run_number }}
+        release_name: Release v${{ github.run_number }}
+        draft: false
+        prerelease: false
+        
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./Alpha_Tool_Mac.zip
+        asset_name: Alpha_Tool_Mac.zip
+        asset_content_type: application/zip 

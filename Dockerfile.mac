@@ -1,0 +1,7 @@
+FROM --platform=darwin python:3.8-slim
+
+WORKDIR /app
+COPY . .
+
+RUN pip install -r requirements.txt
+RUN cd mac && python create_icns.py && python build_mac.py 
