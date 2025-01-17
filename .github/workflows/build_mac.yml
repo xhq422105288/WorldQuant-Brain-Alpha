@@ -13,16 +13,18 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     
+    - name: Install system dependencies
+      run: |
+        brew update
+        brew install gettext
+        brew link gettext --force
+        echo "LIBRARY_PATH=$LIBRARY_PATH:/usr/local/opt/gettext/lib" >> $GITHUB_ENV
+        
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
         python-version: '3.8'
         architecture: 'x64'
-        
-    - name: Install system dependencies
-      run: |
-        brew install gettext
-        brew link gettext --force
         
     - name: Install dependencies
       run: |
