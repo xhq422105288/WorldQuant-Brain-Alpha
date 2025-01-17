@@ -45,11 +45,13 @@ WorldQuant-Brain-Alpha/
 - 🔄 支持多种运行模式
 
 ## 🛠️ 安装方法
+、、、
+上传文件出问题了，所有就分开放了两个版本。之后会合并成一个版本。
 
 ### Windows 用户
 ```bash
 # 下载发布版本
-✨ 从 Releases 下载 Alpha_.zip
+✨ 从 Releases选择Alpha_Tool_v1.0版本 下载 Alpha_.zip
 
 # 从源码构建
 🔨 pip install -r requirements.txt
@@ -59,8 +61,20 @@ WorldQuant-Brain-Alpha/
 ### Mac 用户
 ```bash
 # 下载发布版本
-✨ 从 Releases 下载 Alpha_Tool_Mac.zip
-
+✨ 从 Releases选择最新版 下载 Alpha_Tool_Mac.zip
+、、、
+  # 解压文件
+  unzip Alpha_Tool_Mac.zip
+  
+  # 进入解压目录
+  cd Alpha_Tool_Mac
+  
+  # 添加执行权限
+  chmod +x Alpha_Tool
+  
+  # 运行程序
+  ./Alpha_Tool
+、、、
 # 从源码构建
 🔨 pip install -r requirements.txt
 🚀 cd mac && python build_mac.py
