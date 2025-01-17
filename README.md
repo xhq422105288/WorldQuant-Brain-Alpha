@@ -107,18 +107,14 @@ MIT License
 ⭐ 如果这个项目帮助到你，请给一个 star! ⭐
 
 ```
-Stars
-50 ┤                                    ★
-   ┤                                  ★
-40 ┤                               ★
-   ┤                             ★
-30 ┤                          ★
-   ┤                       ★
-20 ┤                    ★
-   ┤                  ★
-10 ┤               ★
-   ┤            ★
-0 ┤★ ～～～～～～～～～～～～～～～～～～～～～～～～～～～
-   2025  1月  2月  3月  4月  5月  6月  7月  8月
+## Star History
+
+<a href="https://star-history.com/#WorldQuant-Brain-AlphaP/WorldQuant-Brain-AlphaP&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=WorldQuant-Brain-AlphaP/WorldQuant-Brain-AlphaP&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=WorldQuant-Brain-AlphaP/WorldQuant-Brain-AlphaP&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=WorldQuant-Brain-AlphaP/WorldQuant-Brain-AlphaP&type=Date" />
+ </picture>
+</a>
 ```
 </div> 
