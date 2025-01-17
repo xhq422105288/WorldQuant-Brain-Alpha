@@ -49,7 +49,7 @@ WorldQuant-Brain-Alpha/
 ### Windows 用户
 ```bash
 # 下载发布版本
-✨ 从 Releases 下载 Alpha_Tool_Mac.zip
+✨ 从 Releases 下载 Alpha_.zip
 
 # 从源码构建
 🔨 pip install -r requirements.txt
