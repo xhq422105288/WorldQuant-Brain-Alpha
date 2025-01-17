@@ -23,6 +23,7 @@ wheels/
 # PyInstaller
 *.manifest
 *.spec
+WorldQuant_Brain_Alpha_Generator.spec
 
 # Credentials
 brain_credentials.txt
