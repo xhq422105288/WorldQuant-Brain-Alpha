@@ -103,7 +103,7 @@ MIT License
 - 🌟 GitHub: [YHYYDS666](https://github.com/YHYYDS666)
 
 ---
-<div align="center">
+
 ⭐ 如果这个项目帮助到你，请给一个 star! ⭐
 
 ```
@@ -114,7 +114,5 @@ MIT License
    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=WorldQuant-Brain-AlphaP/WorldQuant-Brain-AlphaP&type=Date&theme=dark" />
    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=WorldQuant-Brain-AlphaP/WorldQuant-Brain-AlphaP&type=Date" />
    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=WorldQuant-Brain-AlphaP/WorldQuant-Brain-AlphaP&type=Date" />
- </picture>
-</a>
+
 ```
-</div> 
