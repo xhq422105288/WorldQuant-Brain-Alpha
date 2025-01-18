@@ -1,5 +1,6 @@
 from setuptools import setup, find_packages
 
+
 setup(
     name="Alpha_Tool",
     version="1.0.0",
@@ -25,4 +26,4 @@ setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
-) 
+)

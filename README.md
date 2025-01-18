@@ -6,21 +6,23 @@
 ![GitHub forks](https://img.shields.io/github/forks/YHYYDS666/WorldQuant-Brain-Alpha?style=social)
 ![GitHub watchers](https://img.shields.io/github/watchers/YHYYDS666/WorldQuant-Brain-Alpha?style=social)
 
-```
-  ____    _____   _____    ____   _   _   _____ 
+```txt
+  ____    _____   _____    ____   _   _   _____
  |  _ \  |_   _| |  ___|  / ___| | | | | |_   _|
- | |_) |   | |   | |_    | |  _  | |_| |   | |  
- |  _ <    | |   |  _|   | |_| | |  _  |   | |  
- |_| \_\   |_|   |_|      \____| |_| |_|   |_|  
+ | |_) |   | |   | |_    | |  _  | |_| |   | |
+ |  _ <    | |   |  _|   | |_| | |  _  |   | |
+ |_| \_\   |_|   |_|      \____| |_| |_|   |_|
 ```
 
 </div>
 
 ## 📖 项目介绍
+
 这是一个用于自动生成和提交 WorldQuant Brain Alpha 表达式的工具。它可以帮助用户自动化测试和提交 Alpha 策略。
 
 ## 🗂️ 目录结构
-```
+
+```txt
 WorldQuant-Brain-Alpha/
 ├── 📜 main.py                # 主程序入口
 ├── 🧠 brain_batch_alpha.py   # 核心处理模块
@@ -38,6 +40,7 @@ WorldQuant-Brain-Alpha/
 ```
 
 ## ✨ 功能特点
+
 - 🤖 自动生成 Alpha 策略
 - 📈 自动测试性能指标
 - 🚀 自动提交合格策略
@@ -49,6 +52,7 @@ WorldQuant-Brain-Alpha/
 上传文件出问题了，所有就分开放了两个版本。之后会合并成一个版本。
 
 ### Windows 用户
+
 ```bash
 # 下载发布版本
 ✨ 从 Releases选择Alpha_Tool_v1.0版本 下载 Alpha_.zip
@@ -59,19 +63,20 @@ WorldQuant-Brain-Alpha/
 ```
 
 ### Mac 用户
+
 ```bash
 # 下载发布版本
 ✨ 从 Releases选择最新版 下载 Alpha_Tool_Mac.zip
 
   # 解压文件
   unzip Alpha_Tool_Mac.zip
-  
+
   # 进入解压目录
   cd Alpha_Tool_Mac
-  
+
   # 添加执行权限
   chmod +x Alpha_Tool
-  
+
   # 运行程序
   ./Alpha_Tool
 
@@ -81,6 +86,7 @@ WorldQuant-Brain-Alpha/
 ```
 
 ## 📊 数据集支持
+
 | 数据集 | 描述 | 股票范围 |
 |--------|------|----------|
 | 📈 fundamental6 | 基础财务数据 | TOP3000 |
@@ -88,7 +94,8 @@ WorldQuant-Brain-Alpha/
 | 📉 pv1 | 成交量数据 | TOP1000 |
 
 ## 👍 性能要求
-```
+
+```txt
      ___________
     |  METRICS  |
     |-----------|
@@ -100,6 +107,7 @@ WorldQuant-Brain-Alpha/
 ```
 
 ## 🎯 使用流程
+
 1. 📝 配置账号信息
 2. 🎲 选择数据集
 3. 🔄 选择运行模式
@@ -107,13 +115,16 @@ WorldQuant-Brain-Alpha/
 5. 🚀 自动提交策略
 
 ## 🤝 贡献指南
+
 欢迎提交 Issue 和 Pull Request！
 
 ## 📄 许可证
+
 MIT License
 
 ## 👨‍💻 联系方式
-- 📧 Email: 666@woaiys.filegear-sg.me
+
+- 📧 Email: <666@woaiys.filegear-sg.me>
 - 🌟 GitHub: [YHYYDS666](https://github.com/YHYYDS666)
 
 ---

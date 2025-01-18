@@ -30,7 +30,7 @@ args = [
     f'--specpath={mac_dir}'
 ]
 
-# 如果有Mac图标文件，添加图标
+# 如果有 Mac 图标文件，添加图标
 icon_path = os.path.join(mac_dir, 'icon.icns')
 if os.path.exists(icon_path):
     args.append(f'--icon={icon_path}')
@@ -39,9 +39,9 @@ try:
     # 运行打包命令
     PyInstaller.__main__.run(args)
 
-    # 打包完成后，复制或创建配置文件到dist目录
+    # 打包完成后，复制或创建配置文件到 dist 目录
     print("\n正在处理配置文件...")
-    
+
     # 处理认证文件
     credentials_src = os.path.join(ROOT_DIR, 'brain_credentials.txt')
     if os.path.exists(credentials_src):
@@ -51,19 +51,19 @@ try:
         with open(os.path.join(mac_dist_dir, 'brain_credentials.txt'), 'w') as f:
             f.write('["your_email@example.com","your_password"]')
         print("✅ 创建了示例 brain_credentials.txt")
-        
-    # 处理Alpha ID文件
+
+    # 处理 Alpha ID 文件
     alpha_ids_src = os.path.join(ROOT_DIR, 'alpha_ids.txt')
     if os.path.exists(alpha_ids_src):
         shutil.copy2(alpha_ids_src, mac_dist_dir)
         print("✅ alpha_ids.txt 复制成功")
     else:
         with open(os.path.join(mac_dist_dir, 'alpha_ids.txt'), 'w') as f:
-            pass
+            ...
         print("✅ 创建了空的 alpha_ids.txt")
-        
-    print(f"\n✅ Mac版本打包完成! 文件位于 {mac_dist_dir}")
-    
+
+    print(f"\n✅ Mac 版本打包完成! 文件位于 {mac_dist_dir}")
+
 except Exception as e:
     print(f"\n❌ 打包过程出错: {str(e)}")
-    sys.exit(1) 
+    sys.exit(1)
