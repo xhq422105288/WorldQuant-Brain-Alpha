@@ -38,15 +38,15 @@ try:
         with open('dist/brain_credentials.txt', 'w') as f:
             f.write('["your_email@example.com","your_password"]')
         print("✅ 创建了示例 brain_credentials.txt")
-        
+
     # 处理Alpha ID文件
     if os.path.exists('alpha_ids.txt'):
         shutil.copy2('alpha_ids.txt', 'dist/')
         print("✅ alpha_ids.txt 复制成功")
     else:
         with open('dist/alpha_ids.txt', 'w') as f:
-            pass
+            ...
         print("✅ 创建了空的 alpha_ids.txt")
-        
+
 except Exception as e:
-    print(f"❌ 处理配置文件时出错: {str(e)}") 
+    print(f"❌ 处理配置文件时出错: {str(e)}")
