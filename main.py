@@ -72,9 +72,12 @@ def main():
             print("\n📈 可用策略模式:")
             print("1: 基础策略模式")
             print("2: 多因子组合模式")
+            print("3: 高级合成策略模式")
+            print("4: 动量策略模式")
+            print("5: 价值策略模式")
 
-            strategy_mode = int(input("\n请选择策略模式 (1-2): "))
-            if strategy_mode not in [1, 2]:
+            strategy_mode = int(input("\n请选择策略模式 (1-5): "))
+            if strategy_mode not in [1, 2, 3, 4, 5]:
                 print("❌ 无效的策略模式")
                 return
 

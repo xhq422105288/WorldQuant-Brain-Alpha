@@ -168,6 +168,11 @@ class BrainBatchAlpha:
             subuniverse_sharpe = float(sub_universe_check.get('value', 0))
             required_subuniverse_sharpe = float(sub_universe_check.get('limit', 0))
 
+            # 获取其他重要指标
+            returns = float(is_data.get('returns', 0))
+            drawdown = float(is_data.get('drawdown', 0))
+            capacity = float(is_data.get('capacity', 0))
+
             # 打印指标
             print("\n📊 Alpha 指标详情:")
             print(f"  Sharpe: {sharpe:.3f} (>1.5)")
@@ -175,6 +180,9 @@ class BrainBatchAlpha:
             print(f"  Turnover: {turnover:.3f} (0.1-0.9)")
             print(f"  IC Mean: {ic_mean:.3f} (>0.02)")
             print(f"  子宇宙 Sharpe: {subuniverse_sharpe:.3f} (>{required_subuniverse_sharpe:.3f})")
+            print(f"  收益率: {returns:.3f} (>0.05)")
+            print(f"  最大回撤: {drawdown:.3f} (<0.5)")
+            print(f"  容量: {capacity:.0f} (>1000000)")
 
             print("\n📝 指标评估结果:")
 
@@ -210,6 +218,25 @@ class BrainBatchAlpha:
                 is_qualified = False
             else:
                 print(f"✅ 子宇宙 Sharpe 达标 ({subuniverse_sharpe:.3f} > {required_subuniverse_sharpe:.3f})")
+
+            # 新增指标检查
+            if returns < 0.05:
+                print("❌ 收益率不达标")
+                is_qualified = False
+            else:
+                print("✅ 收益率达标")
+
+            if drawdown > 0.5:
+                print("❌ 最大回撤过大")
+                is_qualified = False
+            else:
+                print("✅ 最大回撤达标")
+
+            if capacity < 1000000:
+                print("❌ 容量不足")
+                is_qualified = False
+            else:
+                print("✅ 容量达标")
 
             print("\n🔍 检查项结果:")
             checks = is_data.get('checks', [])
