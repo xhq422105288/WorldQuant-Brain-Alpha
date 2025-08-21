@@ -4,7 +4,7 @@ DATASET_CONFIGS = {
     'fundamental6': {
         'id': 'fundamental6',
         'universe': 'TOP3000',
-        'description': '基础财务数据',
+        'description': '基础财务数据 (稳健但信号偏弱)',
         'api_settings': {
             'instrumentType': 'EQUITY',
             'region': 'USA',
@@ -26,7 +26,7 @@ DATASET_CONFIGS = {
     'analyst4': {
         'id': 'analyst4',
         'universe': 'TOP1000',
-        'description': '分析师预测数据',
+        'description': '分析师预测数据 (高IC但易过拟合)',
         'api_settings': {
             'instrumentType': 'EQUITY',
             'region': 'USA',
@@ -47,7 +47,7 @@ DATASET_CONFIGS = {
     'pv1': {
         'id': 'pv1',
         'universe': 'TOP1000',
-        'description': '股市成交量数据',
+        'description': '股市成交量数据 (噪声大，不建议单独使用)',
         'api_settings': {
             'instrumentType': 'EQUITY',
             'region': 'USA',
@@ -63,6 +63,59 @@ DATASET_CONFIGS = {
         'fields': [
             'volume', 'close', 'open', 'high', 'low',
             'vwap', 'returns', 'turnover', 'volatility'
+        ]
+    },
+    # 添加混合数据集支持
+    'mixed_pv_fund': {
+        'id': 'mixed',
+        'universe': 'TOP3000',
+        'description': '混合数据集(价量+基本面) → 合格率显著提高',
+        'api_settings': {
+            'instrumentType': 'EQUITY',
+            'region': 'USA',
+            'delay': 1,
+            'decay': 0,
+            'neutralization': 'SUBINDUSTRY',
+            'truncation': 0.08,
+            'pasteurization': 'ON',
+            'unitHandling': 'VERIFY',
+            'nanHandling': 'ON',
+            'language': 'FASTEXPR'
+        },
+        'fields': [
+            # 价量数据
+            'volume', 'close', 'open', 'high', 'low',
+            'vwap', 'returns', 'turnover', 'volatility',
+            # 基本面数据
+            'assets', 'liabilities', 'revenue', 'netincome',
+            'cash', 'debt', 'equity', 'eps', 'pe_ratio',
+            'pb_ratio', 'market_cap', 'dividend_yield'
+        ]
+    },
+    'mixed_analyst_fund': {
+        'id': 'mixed',
+        'universe': 'TOP1000',
+        'description': '混合数据集(分析师+基本面) → 平衡IC和覆盖范围',
+        'api_settings': {
+            'instrumentType': 'EQUITY',
+            'region': 'USA',
+            'delay': 1,
+            'decay': 0,
+            'neutralization': 'SUBINDUSTRY',
+            'truncation': 0.08,
+            'pasteurization': 'ON',
+            'unitHandling': 'VERIFY',
+            'nanHandling': 'ON',
+            'language': 'FASTEXPR'
+        },
+        'fields': [
+            # 分析师数据
+            'anl4_tbvps_low', 'anl4_tbvps_high',
+            'anl4_tbvps_mean', 'anl4_tbvps_median',
+            # 基本面数据
+            'assets', 'liabilities', 'revenue', 'netincome',
+            'cash', 'debt', 'equity', 'eps', 'pe_ratio',
+            'pb_ratio', 'market_cap', 'dividend_yield'
         ]
     }
 }
@@ -99,12 +152,15 @@ def get_dataset_fields(dataset_name):
     return config['fields'] if config else []
 
 
-def get_api_settings(dataset_name):
-    """获取指定数据集的API设置"""
-
-    config = DATASET_CONFIGS.get(dataset_name)
-    if config and 'api_settings' in config:
-        settings = config['api_settings'].copy()
-        settings['universe'] = config['universe']
-        return settings
-    return None
+def get_dataset_recommendation(dataset_name):
+    """获取数据集使用建议"""
+    
+    recommendations = {
+        'fundamental6': '稳健但信号偏弱，建议与其他数据集混合使用',
+        'analyst4': '高IC但易过拟合，覆盖股票少，建议谨慎使用',
+        'pv1': '噪声大，不建议单独使用',
+        'mixed_pv_fund': '价量+基本面混合，合格率显著提高，推荐使用',
+        'mixed_analyst_fund': '分析师+基本面混合，平衡IC和覆盖范围，推荐使用'
+    }
+    
+    return recommendations.get(dataset_name, '无特殊建议')

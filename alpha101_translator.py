@@ -78,18 +78,34 @@ class Alpha101Translator:
             "ts_rank(ts_corr(close, volume/sharesout, 10), 10)"
         ])
         
-        # 使用实际数据字段的因子
+        # 使用实际数据字段的因子 (针对混合数据集优化)
         if datafields:
-            for field in datafields[:3]:  # 只使用前3个字段避免过多
+            # 分离价量字段和基本面字段
+            price_volume_fields = [f for f in datafields if f in ['close', 'open', 'high', 'low', 'volume', 'vwap', 'returns', 'turnover', 'volatility']]
+            fundamental_fields = [f for f in datafields if f not in ['close', 'open', 'high', 'low', 'volume', 'vwap', 'returns', 'turnover', 'volatility']]
+            
+            # 价量因子
+            for field in price_volume_fields[:2]:  # 限制价量字段数量
                 strategies.extend([
-                    # 基本动量
+                    # 价量动量
                     f"group_rank({field}/delay({field}, 5), subindustry)",
-                    # 基本均值回归
-                    f"group_rank(({field} - ts_mean({field}, 20))/ts_std_dev({field}, 20), subindustry)",
-                    # 基本波动率
+                    # 价量波动率
                     f"ts_rank(ts_std_dev({field}, 10), 10)",
-                    # 组合因子
+                    # 价量组合因子
                     f"group_rank({field}/delay({field}, 5), subindustry) - ts_rank(ts_std_dev({field}, 10), 10)"
+                ])
+            
+            # 基本面因子
+            for field in fundamental_fields[:2]:  # 限制基本面字段数量
+                strategies.extend([
+                    # 基本面价值因子
+                    f"rank(1/{field})",
+                    # 基本面动量因子
+                    f"ts_rank({field}/delay({field}, 20), 10)",
+                    # 基本面均值回归因子
+                    f"({field} - ts_mean({field}, 252))/ts_std_dev({field}, 252)",
+                    # 基本面与价量结合因子
+                    f"group_rank({field}/cap, subindustry) * ts_rank(volume, 10)" if 'volume' in price_volume_fields else f"group_rank({field}/cap, subindustry)"
                 ])
         
         return strategies
@@ -101,16 +117,28 @@ class Alpha101Translator:
         
         # 基于Alpha158的因子思想
         if datafields:
-            for field in datafields[:3]:
+            # 分离价量字段和基本面字段
+            price_volume_fields = [f for f in datafields if f in ['close', 'open', 'high', 'low', 'volume', 'vwap', 'returns', 'turnover', 'volatility']]
+            fundamental_fields = [f for f in datafields if f not in ['close', 'open', 'high', 'low', 'volume', 'vwap', 'returns', 'turnover', 'volatility']]
+            
+            # 价量因子
+            for field in price_volume_fields[:2]:
                 strategies.extend([
-                    # 价格与成交量关系
+                    # 价量趋势因子
                     f"ts_rank({field} * volume/sharesout, 10)",
-                    # 价格变化加速度
+                    # 价量加速因子
                     f"ts_rank({field}/delay({field}, 1) - delay({field}/delay({field}, 1), 1), 10)",
-                    # 价格相对强势
-                    f"group_rank({field}/ts_mean({field}, 20), subindustry)",
-                    # 价格波动性调整
-                    f"({field} - ts_mean({field}, 20))/ts_std_dev({field}, 20) * ts_rank(volume, 10)"
+                    # 价量相对强势因子
+                    f"group_rank({field}/ts_mean({field}, 20), subindustry)"
+                ])
+                
+            # 基本面因子
+            for field in fundamental_fields[:2]:
+                strategies.extend([
+                    # 基本面波动性调整因子
+                    f"({field} - ts_mean({field}, 20))/ts_std_dev({field}, 20) * ts_rank(volume, 10)" if 'volume' in price_volume_fields else f"({field} - ts_mean({field}, 20))/ts_std_dev({field}, 20)",
+                    # 基本面复合因子
+                    f"rank({field}/cap) * ts_rank({field}/delay({field}, 20), 10)"
                 ])
         
         return strategies
@@ -122,17 +150,18 @@ class Alpha101Translator:
         
         # 基本面因子 (如PE、PB、ROE等)
         if datafields:
-            for field in datafields:
-                if field in ['pe_ratio', 'pb_ratio', 'market_cap', 'eps', 'dividend_yield', 'assets', 'liabilities', 'revenue', 'netincome']:
-                    strategies.extend([
-                        # 基本面价值因子
-                        f"rank(1/{field})",
-                        # 基本面动量因子
-                        f"ts_rank({field}/delay({field}, 20), 10)",
-                        # 基本面均值回归因子
-                        f"({field} - ts_mean({field}, 252))/ts_std_dev({field}, 252)",
-                        # 基本面与价量结合因子
-                        f"group_rank({field}/cap, subindustry)"
-                    ])
+            fundamental_fields = [f for f in datafields if f in ['assets', 'liabilities', 'revenue', 'netincome', 'cash', 'debt', 'equity', 'eps', 'pe_ratio', 'pb_ratio', 'market_cap', 'dividend_yield']]
+            
+            for field in fundamental_fields:
+                strategies.extend([
+                    # 基本面价值因子
+                    f"rank(1/{field})",
+                    # 基本面动量因子
+                    f"ts_rank({field}/delay({field}, 20), 10)",
+                    # 基本面均值回归因子
+                    f"({field} - ts_mean({field}, 252))/ts_std_dev({field}, 252)",
+                    # 基本面与市场因子结合
+                    f"group_rank({field}/cap, subindustry)"
+                ])
         
         return strategies
