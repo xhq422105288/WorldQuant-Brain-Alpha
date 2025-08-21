@@ -39,3 +39,6 @@ mac/build/
 # Windows
 dist/
 build/
+
+
+.venv
