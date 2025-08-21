@@ -46,28 +46,78 @@ class BrainBatchAlpha:
             print(f"❌ 认证错误: {str(e)}")
             raise
 
-    def simulate_alphas(self, datafields=None, strategy_mode=1, dataset_name=None, previous_results=None, use_screening=False):
-        """模拟 Alpha 列表"""
+    def simulate_alphas(self, datafields=None, strategy_mode=1, dataset_name=None, previous_results=None, 
+                       use_screening=False, continuous=False, max_iterations=None):
+        """模拟 Alpha 列表，支持持续生成模式"""
 
         try:
-            datafields = self._get_datafields_if_none(datafields, dataset_name)
-            if not datafields:
-                print("❌ 无法获取数据字段，终止Alpha生成")
-                return []
+            iteration = 0
+            total_results = []
+            
+            while True:
+                iteration += 1
+                print(f"\n🔄 迭代轮次 {iteration}")
+                
+                datafields = self._get_datafields_if_none(datafields, dataset_name)
+                if not datafields:
+                    print("❌ 无法获取数据字段，终止Alpha生成")
+                    break
 
-            # 如果没有提供previous_results，则从历史记录中加载
-            if previous_results is None:
-                print("🔍 从历史记录中加载Alpha测试结果用于优化...")
-                previous_results = self.history_manager.get_history(100)  # 加载最近100条记录
-                if not previous_results:
-                    print("⚠️ 没有找到历史记录，将使用默认策略生成")
+                # 如果没有提供previous_results，则从历史记录中加载
+                if previous_results is None:
+                    print("🔍 从历史记录中加载Alpha测试结果用于优化...")
+                    previous_results = self.history_manager.get_history(100)  # 加载最近100条记录
+                    if not previous_results:
+                        print("⚠️ 没有找到历史记录，将使用默认策略生成")
 
-            alpha_list = self._generate_alpha_list(datafields, strategy_mode, previous_results)
-            if not alpha_list:
-                print("❌ 未能生成任何Alpha策略")
-                return []
+                alpha_list = self._generate_alpha_list(datafields, strategy_mode, previous_results)
+                if not alpha_list:
+                    print("❌ 未能生成任何Alpha策略")
+                    break
 
-            print(f"\n🚀 开始模拟 {len(alpha_list)} 个 Alpha 表达式...")
+                print(f"\n🚀 开始模拟 {len(alpha_list)} 个 Alpha 表达式...")
+                
+                # 重置previous_results以便下一轮迭代使用
+                new_previous_results = []
+```
+
+brain_batch_alpha.py
+```python
+<<<<<<< SEARCH
+                if result:
+                    results.append(result)
+                    # 保存到历史记录
+                    self.history_manager.add_alpha_result(result)
+                    # 如果通过检查，也保存ID到alpha_ids.txt
+                    if result.get('passed_all_checks'):
+                        self._save_alpha_id(result['alpha_id'], result)
+
+                if i < len(alpha_list):
+                    sleep(5)
+                if result:
+                    new_previous_results.append(result)
+                    total_results.append(result)
+                    # 保存到历史记录
+                    self.history_manager.add_alpha_result(result)
+                    # 如果通过检查，也保存ID到alpha_ids.txt
+                    if result.get('passed_all_checks'):
+                        self._save_alpha_id(result['alpha_id'], result)
+
+                if i < len(alpha_list):
+                    sleep(5)
+                    
+            # 将本轮结果作为下一轮的previous_results
+            previous_results = new_previous_results
+            
+            # 如果不是持续模式，或者达到最大迭代次数，则退出循环
+            if not continuous or (max_iterations and iteration >= max_iterations):
+                break
+                
+            # 等待一段时间再开始下一轮迭代
+            print("\n⏳ 等待10秒后开始下一轮迭代...")
+            sleep(10)
+
+        return total_results
 
             results = []
             

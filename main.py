@@ -91,6 +91,39 @@ def print_dataset_tips(dataset_name):
         print(f"  {recommendation}")
 
 
+def continuous_alpha_generation(brain, strategy_mode, dataset_name):
+    """持续生成Alpha"""
+    print("\n🔄 启动持续Alpha生成模式...")
+    print("ℹ️  按 Ctrl+C 可以停止生成并返回主菜单")
+    
+    cycle_count = 0
+    try:
+        while True:
+            cycle_count += 1
+            print(f"\n🔄 第 {cycle_count} 轮 Alpha 生成开始...")
+            
+            # 加载历史结果用于优化
+            previous_results = None
+            print("\n🔍 尝试加载历史Alpha测试结果用于优化...")
+            
+            # 生成并测试Alpha
+            results = brain.simulate_alphas(None, strategy_mode, dataset_name, previous_results)
+            
+            if not results:
+                print("⚠️ 本轮未生成任何结果，继续下一轮...")
+            else:
+                print(f"✅ 第 {cycle_count} 轮完成，共生成 {len(results)} 个Alpha")
+            
+            print(f"\n⏱️  等待5秒后开始下一轮...")
+            import time
+            time.sleep(5)
+            
+    except KeyboardInterrupt:
+        print(f"\n⏹️  已停止持续生成，总共完成 {cycle_count} 轮生成")
+    except Exception as e:
+        print(f"❌ 持续生成过程中出错: {str(e)}")
+
+
 def main():
     """主程序入口"""
     try:
@@ -101,15 +134,16 @@ def main():
         print("2: 仅测试模式 (测试并保存合格 Alpha ID)")
         print("3: 仅提交模式 (提交已保存的合格 Alpha ID)")
         print("4: 查看历史记录")
+        print("5: 持续生成模式 (循环生成Alpha)")
 
-        mode = int(input("\n请选择模式 (1-4): "))
-        if mode not in [1, 2, 3, 4]:
+        mode = int(input("\n请选择模式 (1-5): "))
+        if mode not in [1, 2, 3, 4, 5]:
             print("❌ 无效的模式选择")
             return
 
         brain = BrainBatchAlpha()
 
-        if mode in [1, 2]:
+        if mode in [1, 2, 5]:
             print("\n📊 可用数据集列表:")
             datasets = get_dataset_list()
             for dataset in datasets:
@@ -134,14 +168,6 @@ def main():
             # 显示数据集使用建议
             print_dataset_tips(dataset_name)
 
-            # 添加默认数据集推荐
-            print("📌 推荐选择: 4 (mixed_pv_fund) 或 5 (mixed_analyst_fund)")
-            dataset_index = input("请选择数据集编号 (默认4): ") or "4"
-            dataset_name = get_dataset_by_index(dataset_index)
-            if not dataset_name:
-                print("❌ 无效的数据集编号")
-                return
-
             print("\n📈 可用策略模式:")
             print("1: 基础策略模式")
             print("2: 多因子组合模式")
@@ -158,6 +184,11 @@ def main():
                 print("❌ 无效的策略模式")
                 return
 
+            # 处理持续生成模式
+            if mode == 5:
+                continuous_alpha_generation(brain, strategy_mode, dataset_name)
+                return
+
             # 如果选择优化策略模式，尝试加载历史结果
             previous_results = None
             print("\n🔍 尝试加载历史Alpha测试结果用于优化...")
@@ -170,6 +201,8 @@ def main():
 
             if mode == 1:
                 submit_alpha_ids(brain, 2)
+            elif mode == 2:
+                print(f"✅ Alpha测试完成，共生成 {len(results)} 个结果")
                 
         elif mode == 3:
             num_to_submit = int(input("\n请输入要提交的 Alpha 数量: "))
