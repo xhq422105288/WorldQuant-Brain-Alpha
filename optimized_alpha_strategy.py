@@ -14,21 +14,26 @@ class OptimizedAlphaStrategy:
     def get_optimized_simulation_data(self, datafields, mode=1, previous_results=None):
         """根据历史表现优化生成策略列表"""
         
+        # 即使没有历史结果也使用优化生成器
         if previous_results:
             # 根据历史结果优化策略
             return self.generate_optimized_strategy(datafields, previous_results)
         else:
-            # 首次生成策略
-            return self.generate_initial_strategy(datafields, mode)
+            # 首次生成策略，但仍使用优化方法
+            return self.generate_initial_optimized_strategy(datafields, mode)
             
-    def generate_initial_strategy(self, datafields, mode=1):
-        """首次生成策略"""
+    def generate_initial_optimized_strategy(self, datafields, mode=1):
+        """首次生成优化策略"""
         if mode == 1:
             return self.generate_basic_optimized_strategy(datafields)
         elif mode == 2:
             return self.generate_multi_factor_optimized_strategy(datafields)
         elif mode == 3:
             return self.generate_advanced_optimized_strategy(datafields)
+        elif mode == 4:
+            return self.generate_momentum_optimized_strategy(datafields)
+        elif mode == 5:
+            return self.generate_value_optimized_strategy(datafields)
         else:
             print("❌ 无效的策略模式")
             return []
@@ -62,9 +67,9 @@ class OptimizedAlphaStrategy:
         # 添加一些全新的策略尝试
         strategies.extend(self.generate_exploration_strategies(datafields))
         
-        # 如果没有历史数据，使用初始策略
-        if not strategies:
-            strategies = self.generate_basic_optimized_strategy(datafields)
+        # 如果没有生成足够的策略，使用初始策略补充
+        if len(strategies) < 10:
+            strategies.extend(self.generate_basic_optimized_strategy(datafields))
             
         return strategies
 
@@ -263,6 +268,57 @@ class OptimizedAlphaStrategy:
                 
                 # 创新性三因子组合
                 f"sign(ts_corr({f1}, {f2}, 20)) * ts_rank({f3}, 10)"
+            ])
+            
+        return strategies
+        
+    def generate_momentum_optimized_strategy(self, datafields):
+        """生成优化的动量策略"""
+        
+        strategies = []
+        for field in datafields:
+            strategies.extend([
+                # 不同周期动量
+                f"ts_rank({field}/delay({field}, 5), 10)",
+                f"ts_rank({field}/delay({field}, 20), 5)",
+                f"ts_rank({field}/delay({field}, 60), 3)",
+                
+                # 动量反转组合
+                f"if_else(ts_rank({field}, 20) > 0.9, -{field}, {field})",
+                
+                # 动量加速
+                f"ts_rank({field}/delay({field}, 5) - delay({field}/delay({field}, 5), 5), 10)",
+                
+                # 交叉资产动量
+                f"{field} - group_mean({field}, 1, sector)",
+                
+                # 优化的动量因子
+                f"ts_rank({field}/delay({field}, 1) - 1, 10) * sign(ts_rank(returns, 10))"
+            ])
+            
+        return strategies
+        
+    def generate_value_optimized_strategy(self, datafields):
+        """生成优化的价值策略"""
+        
+        strategies = []
+        for field in datafields:
+            strategies.extend([
+                # 价值因子标准化
+                f"rank({field}/cap)",
+                f"ts_rank({field}/bookvalue, 20)",
+                
+                # 价值动量结合
+                f"if_else(rank({field}) < 0.3, ts_rank(returns, 10), -ts_rank(returns, 10))",
+                
+                # 相对价值
+                f"({field} - group_mean({field}, 1, industry)) / group_std_dev({field}, 1, industry)",
+                
+                # 价值回归
+                f"ts_rank(({field}/mean({field}, 252) - 1), 10)",
+                
+                # 优化的价值因子
+                f"rank({field}) * (1/ts_rank(cap, 10)) * sign(ts_rank(returns, 20))"
             ])
             
         return strategies

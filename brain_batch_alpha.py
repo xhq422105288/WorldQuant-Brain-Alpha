@@ -55,11 +55,11 @@ class BrainBatchAlpha:
                 return []
 
             # 如果没有提供previous_results，则从历史记录中加载
-            if previous_results is None and strategy_mode == 6:
-                print("🔍 从历史记录中加载Alpha测试结果...")
-                previous_results = self.history_manager.get_history(50)  # 加载最近50条记录
+            if previous_results is None:
+                print("🔍 从历史记录中加载Alpha测试结果用于优化...")
+                previous_results = self.history_manager.get_history(100)  # 加载最近100条记录
                 if not previous_results:
-                    print("⚠️ 没有找到历史记录，将使用初始策略生成器")
+                    print("⚠️ 没有找到历史记录")
 
             alpha_list = self._generate_alpha_list(datafields, strategy_mode, previous_results)
             if not alpha_list:
@@ -402,15 +402,9 @@ class BrainBatchAlpha:
     def _generate_alpha_list(self, datafields, strategy_mode, previous_results=None):
         """生成 Alpha 表达式列表"""
         try:
-            # 如果有历史结果，使用优化策略生成器
-            if previous_results is not None:
-                strategies = self.optimized_strategy_generator.get_optimized_simulation_data(
-                    datafields, strategy_mode, previous_results)
-            else:
-                # 初始化策略生成器
-                strategy_generator = AlphaStrategy()
-                # 生成策略列表
-                strategies = strategy_generator.get_simulation_data(datafields, strategy_mode)
+            # 对于所有策略模式，都使用优化策略生成器并传入历史结果
+            strategies = self.optimized_strategy_generator.get_optimized_simulation_data(
+                datafields, strategy_mode, previous_results)
 
             print(f"生成了 {len(strategies)} 个Alpha表达式")
 
