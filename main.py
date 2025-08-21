@@ -1,11 +1,40 @@
 """WorldQuant Brain 批量 Alpha 生成系统"""
 
 import os
+import json
 
 from brain_batch_alpha import BrainBatchAlpha
 from dataset_config import get_dataset_by_index, get_dataset_list
+from alpha_history_manager_sqlite import AlphaHistoryManagerSQLite
 
 STORAGE_ALPHA_ID_PATH = "alpha_ids.txt"
+
+
+def view_alpha_history():
+    """查看Alpha历史记录"""
+    try:
+        history_manager = AlphaHistoryManagerSQLite()
+        history = history_manager.get_history(10)  # 获取最近10条记录
+        
+        if not history:
+            print("❌ 没有找到历史记录")
+            return
+            
+        print(f"\n📋 Alpha 历史记录 (最近10条):")
+        for i, record in enumerate(history, 1):
+            status = "✅" if record.get('passed_all_checks', False) else "❌"
+            expression = record.get('expression', 'Unknown')[:50] + "..." if len(record.get('expression', '')) > 50 else record.get('expression', 'Unknown')
+            print(f"{i}. {status} {expression}")
+            
+        # 显示统计信息
+        stats = history_manager.get_statistics()
+        print("\n📈 统计信息:")
+        print(f"  总测试数: {stats['total_count']}")
+        print(f"  成功数: {stats['success_count']}")
+        print(f"  成功率: {stats['success_rate']*100:.1f}%")
+        
+    except Exception as e:
+        print(f"❌ 查看历史记录时出错: {str(e)}")
 
 
 def submit_alpha_ids(brain, num_to_submit=2):
@@ -50,9 +79,10 @@ def main():
         print("1: 自动模式 (测试并自动提交 2 个合格 Alpha)")
         print("2: 仅测试模式 (测试并保存合格 Alpha ID)")
         print("3: 仅提交模式 (提交已保存的合格 Alpha ID)")
+        print("4: 查看历史记录")
 
-        mode = int(input("\n请选择模式 (1-3): "))
-        if mode not in [1, 2, 3]:
+        mode = int(input("\n请选择模式 (1-4): "))
+        if mode not in [1, 2, 3, 4]:
             print("❌ 无效的模式选择")
             return
 
@@ -75,13 +105,20 @@ def main():
             print("3: 高级合成策略模式")
             print("4: 动量策略模式")
             print("5: 价值策略模式")
+            print("6: 优化策略模式 (基于历史结果)")
 
-            strategy_mode = int(input("\n请选择策略模式 (1-5): "))
-            if strategy_mode not in [1, 2, 3, 4, 5]:
+            strategy_mode = int(input("\n请选择策略模式 (1-6): "))
+            if strategy_mode not in [1, 2, 3, 4, 5, 6]:
                 print("❌ 无效的策略模式")
                 return
 
-            results = brain.simulate_alphas(None, strategy_mode, dataset_name)
+            # 如果选择优化策略模式，尝试加载历史结果
+            previous_results = None
+            if strategy_mode == 6:
+                print("\n🔍 尝试加载历史Alpha测试结果用于优化...")
+                # 这里可以添加加载历史结果的逻辑
+
+            results = brain.simulate_alphas(None, strategy_mode, dataset_name, previous_results)
 
             if mode == 1:
                 submit_alpha_ids(brain, 2)
@@ -92,6 +129,9 @@ def main():
                 print("❌ 无效的提交数量")
                 return
             submit_alpha_ids(brain, num_to_submit)
+            
+        elif mode == 4:
+            view_alpha_history()
 
     except Exception as e:
         print(f"❌ 程序运行出错: {str(e)}")

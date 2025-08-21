@@ -11,6 +11,8 @@ import requests
 from requests.auth import HTTPBasicAuth
 
 from alpha_strategy import AlphaStrategy
+from optimized_alpha_strategy import OptimizedAlphaStrategy
+from alpha_history_manager_sqlite import AlphaHistoryManagerSQLite
 from dataset_config import get_api_settings, get_dataset_config
 
 
@@ -22,6 +24,8 @@ class BrainBatchAlpha:
 
         self.session = requests.Session()
         self._setup_authentication(credentials_file)
+        self.optimized_strategy_generator = OptimizedAlphaStrategy()
+        self.history_manager = AlphaHistoryManagerSQLite()
 
     def _setup_authentication(self, credentials_file):
         """设置认证"""
@@ -42,7 +46,7 @@ class BrainBatchAlpha:
             print(f"❌ 认证错误: {str(e)}")
             raise
 
-    def simulate_alphas(self, datafields=None, strategy_mode=1, dataset_name=None):
+    def simulate_alphas(self, datafields=None, strategy_mode=1, dataset_name=None, previous_results=None):
         """模拟 Alpha 列表"""
 
         try:
@@ -50,7 +54,14 @@ class BrainBatchAlpha:
             if not datafields:
                 return []
 
-            alpha_list = self._generate_alpha_list(datafields, strategy_mode)
+            # 如果没有提供previous_results，则从历史记录中加载
+            if previous_results is None and strategy_mode == 6:
+                print("🔍 从历史记录中加载Alpha测试结果...")
+                previous_results = self.history_manager.get_history(50)  # 加载最近50条记录
+                if not previous_results:
+                    print("⚠️ 没有找到历史记录，将使用初始策略生成器")
+
+            alpha_list = self._generate_alpha_list(datafields, strategy_mode, previous_results)
             if not alpha_list:
                 return []
 
@@ -60,9 +71,13 @@ class BrainBatchAlpha:
             for i, alpha in enumerate(alpha_list, 1):
                 print(f"\n[{i}/{len(alpha_list)}] 正在模拟 Alpha...")
                 result = self._simulate_single_alpha(alpha)
-                if result and result.get('passed_all_checks'):
+                if result:
                     results.append(result)
-                    self._save_alpha_id(result['alpha_id'], result)
+                    # 保存到历史记录
+                    self.history_manager.add_alpha_result(result)
+                    # 如果通过检查，也保存ID到alpha_ids.txt
+                    if result.get('passed_all_checks'):
+                        self._save_alpha_id(result['alpha_id'], result)
 
                 if i < len(alpha_list):
                     sleep(5)
@@ -384,14 +399,18 @@ class BrainBatchAlpha:
             print(f"❌ 获取数据字段时出错: {str(e)}")
             return None
 
-    def _generate_alpha_list(self, datafields, strategy_mode):
+    def _generate_alpha_list(self, datafields, strategy_mode, previous_results=None):
         """生成 Alpha 表达式列表"""
         try:
-            # 初始化策略生成器
-            strategy_generator = AlphaStrategy()
-
-            # 生成策略列表
-            strategies = strategy_generator.get_simulation_data(datafields, strategy_mode)
+            # 如果有历史结果，使用优化策略生成器
+            if previous_results is not None:
+                strategies = self.optimized_strategy_generator.get_optimized_simulation_data(
+                    datafields, strategy_mode, previous_results)
+            else:
+                # 初始化策略生成器
+                strategy_generator = AlphaStrategy()
+                # 生成策略列表
+                strategies = strategy_generator.get_simulation_data(datafields, strategy_mode)
 
             print(f"生成了 {len(strategies)} 个Alpha表达式")
 
@@ -423,3 +442,11 @@ class BrainBatchAlpha:
         except Exception as e:
             print(f"❌ 生成 Alpha 列表失败: {str(e)}")
             return []
+            
+    def _save_alpha_id(self, alpha_id, alpha_data):
+        """保存 Alpha ID 到文件"""
+        try:
+            with open("alpha_ids.txt", "a") as f:
+                f.write(f"{alpha_id}\n")
+        except Exception as e:
+            print(f"❌ 保存 Alpha ID 时出错: {str(e)}")
