@@ -46,7 +46,7 @@ class BrainBatchAlpha:
             print(f"❌ 认证错误: {str(e)}")
             raise
 
-    def simulate_alphas(self, datafields=None, strategy_mode=1, dataset_name=None, previous_results=None):
+    def simulate_alphas(self, datafields=None, strategy_mode=1, dataset_name=None, previous_results=None, use_screening=False):
         """模拟 Alpha 列表"""
 
         try:
@@ -68,6 +68,16 @@ class BrainBatchAlpha:
             print(f"\n🚀 开始模拟 {len(alpha_list)} 个 Alpha 表达式...")
 
             results = []
+            
+            # 如果启用分阶段筛选，先在小样本上测试
+            if use_screening and len(alpha_list) > 10:
+                print("🔍 执行分阶段筛选: 先在小样本(TOP300)上测试...")
+                # 先用少量股票快速筛选
+                screening_results = self._screen_alphas(alpha_list[:20], dataset_name)
+                # 只有通过筛选的才进行完整测试
+                alpha_list = [alpha for i, alpha in enumerate(alpha_list[:20]) if screening_results[i]] + alpha_list[20:]
+                print(f"✅ 筛选完成，剩余 {len(alpha_list)} 个 Alpha 进行完整测试")
+
             for i, alpha in enumerate(alpha_list, 1):
                 print(f"\n[{i}/{len(alpha_list)}] 正在模拟 Alpha...")
                 result = self._simulate_single_alpha(alpha)
@@ -87,6 +97,69 @@ class BrainBatchAlpha:
         except Exception as e:
             print(f"❌ 模拟过程出错: {str(e)}")
             return []
+
+    def _screen_alphas(self, alpha_list, dataset_name):
+        """在小样本上快速筛选Alpha"""
+        screening_results = []
+        
+        # 修改数据集配置为小样本
+        screening_config = get_dataset_config(dataset_name).copy()
+        screening_config['universe'] = 'TOP300'  # 使用较小的股票池进行筛选
+        
+        for alpha in alpha_list:
+            try:
+                # 修改Alpha设置使用小样本
+                screening_alpha = alpha.copy()
+                screening_alpha['settings'] = screening_alpha['settings'].copy()
+                screening_alpha['settings']['universe'] = 'TOP300'
+                
+                print(f"  筛选: {alpha.get('regular', 'Unknown')[:50]}...")
+                
+                # 发送模拟请求
+                sim_resp = self.session.post(
+                    f"{self.API_BASE_URL}/simulations",
+                    json=screening_alpha
+                )
+
+                if sim_resp.status_code != 201:
+                    screening_results.append(False)
+                    continue
+
+                sim_progress_url = sim_resp.headers['Location']
+                
+                # 等待模拟完成
+                while True:
+                    sim_progress_resp = self.session.get(sim_progress_url)
+                    retry_after_sec = float(sim_progress_resp.headers.get("Retry-After", 0))
+
+                    if retry_after_sec == 0:  # simulation done!
+                        alpha_id = sim_progress_resp.json()['alpha']
+                        
+                        # 获取 Alpha 详情
+                        alpha_url = f"{self.API_BASE_URL}/alphas/{alpha_id}"
+                        alpha_detail = self.session.get(alpha_url)
+                        alpha_data = alpha_detail.json()
+
+                        # 检查基本指标
+                        is_data = alpha_data.get('is', {})
+                        if not is_data:
+                            screening_results.append(False)
+                            break
+
+                        sharpe = float(is_data.get('sharpe', 0))
+                        fitness = float(is_data.get('fitness', 0))
+                        
+                        # 筛选标准相对宽松
+                        is_promising = sharpe > 0.5 and fitness > 0.3
+                        screening_results.append(is_promising)
+                        break
+
+                    sleep(retry_after_sec)
+                    
+            except Exception as e:
+                screening_results.append(False)
+                
+        return screening_results
 
     def _simulate_single_alpha(self, alpha):
         """模拟单个 Alpha"""
@@ -523,6 +596,14 @@ class BrainBatchAlpha:
             except:
                 return []
             
+    def _save_alpha_id(self, alpha_id, alpha_data):
+        """保存 Alpha ID 到文件"""
+        try:
+            with open("alpha_ids.txt", "a") as f:
+                f.write(f"{alpha_id}\n")
+        except Exception as e:
+            print(f"❌ 保存 Alpha ID 时出错: {str(e)}")
+            
     def _generate_default_strategies(self, datafields):
         """生成默认策略，确保始终有策略可以测试"""
         default_strategies = [
@@ -541,11 +622,3 @@ class BrainBatchAlpha:
             ])
             
         return default_strategies
-
-    def _save_alpha_id(self, alpha_id, alpha_data):
-        """保存 Alpha ID 到文件"""
-        try:
-            with open("alpha_ids.txt", "a") as f:
-                f.write(f"{alpha_id}\n")
-        except Exception as e:
-            print(f"❌ 保存 Alpha ID 时出错: {str(e)}")
