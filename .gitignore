@@ -30,6 +30,7 @@ brain_credentials.txt
 
 # Generated files
 alpha_ids.txt
+alpha_history.db
 
 # Mac
 .DS_Store
