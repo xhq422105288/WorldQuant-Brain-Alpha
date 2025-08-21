@@ -119,6 +119,12 @@ def main():
                 print("❌ 没有可用的数据集配置")
                 return
 
+            print("\n💡 数据集选择建议:")
+            print("  推荐选择混合数据集:")
+            print("    - mixed_pv_fund (价量+基本面混合，合格率显著提高)")
+            print("    - mixed_analyst_fund (分析师+基本面混合，平衡IC和覆盖范围)")
+            print("  避免单独使用pv1数据集(噪声大)")
+            
             dataset_index = input("\n请选择数据集编号: ")
             dataset_name = get_dataset_by_index(dataset_index)
             if not dataset_name:
