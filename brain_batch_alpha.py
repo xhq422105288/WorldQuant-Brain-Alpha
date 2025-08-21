@@ -169,14 +169,22 @@ class BrainBatchAlpha:
         try:
             print(f"表达式: {alpha.get('regular', 'Unknown')}")
 
-            # 发送模拟请求
-            sim_resp = self.session.post(
-                f"{self.API_BASE_URL}/simulations",
-                json=alpha
-            )
+            # 添加重试机制
+            max_retries = 3
+            for attempt in range(max_retries):
+                # 发送模拟请求
+                sim_resp = self.session.post(
+                    f"{self.API_BASE_URL}/simulations",
+                    json=alpha
+                )
 
-            if sim_resp.status_code != 201:
-                print(f"❌ 模拟请求失败 (状态码: {sim_resp.status_code})")
+                if sim_resp.status_code == 201:
+                    break
+                if attempt < max_retries - 1:
+                    print(f"⚠️ 第{attempt+1}次请求失败，{2**attempt}秒后重试...")
+                    sleep(2**attempt)
+            else:
+                print(f"❌ 模拟请求失败 (状态码: {sim_resp.status_code}) - 响应: {sim_resp.text[:200]}")
                 return None
 
             try:
