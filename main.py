@@ -111,8 +111,13 @@ def main():
 
         if mode in [1, 2]:
             print("\n📊 可用数据集列表:")
-            for dataset in get_dataset_list():
+            datasets = get_dataset_list()
+            for dataset in datasets:
                 print(dataset)
+
+            if not datasets:
+                print("❌ 没有可用的数据集配置")
+                return
 
             dataset_index = input("\n请选择数据集编号: ")
             dataset_name = get_dataset_by_index(dataset_index)
@@ -144,6 +149,10 @@ def main():
             print("\n🔍 尝试加载历史Alpha测试结果用于优化...")
 
             results = brain.simulate_alphas(None, strategy_mode, dataset_name, previous_results)
+            
+            if not results:
+                print("❌ Alpha生成过程失败或未生成任何结果")
+                return
 
             if mode == 1:
                 submit_alpha_ids(brain, 2)

@@ -52,6 +52,7 @@ class BrainBatchAlpha:
         try:
             datafields = self._get_datafields_if_none(datafields, dataset_name)
             if not datafields:
+                print("❌ 无法获取数据字段，终止Alpha生成")
                 return []
 
             # 如果没有提供previous_results，则从历史记录中加载
@@ -59,10 +60,11 @@ class BrainBatchAlpha:
                 print("🔍 从历史记录中加载Alpha测试结果用于优化...")
                 previous_results = self.history_manager.get_history(100)  # 加载最近100条记录
                 if not previous_results:
-                    print("⚠️ 没有找到历史记录")
+                    print("⚠️ 没有找到历史记录，将使用默认策略生成")
 
             alpha_list = self._generate_alpha_list(datafields, strategy_mode, previous_results)
             if not alpha_list:
+                print("❌ 未能生成任何Alpha策略")
                 return []
 
             print(f"\n🚀 开始模拟 {len(alpha_list)} 个 Alpha 表达式...")
@@ -482,23 +484,32 @@ class BrainBatchAlpha:
             initial_resp = self.session.get(url_template.format(offset=0))
             if initial_resp.status_code != 200:
                 print("❌ 获取数据字段失败")
+                print(f"HTTP状态码: {initial_resp.status_code}")
+                print(f"响应内容: {initial_resp.text}")
                 return None
 
             total_count = initial_resp.json()['count']
+            print(f"📊 数据集 {dataset_name} 总共有 {total_count} 个字段")
 
             # 获取所有数据字段
             all_fields = []
             for offset in range(0, total_count, 50):
                 resp = self.session.get(url_template.format(offset=offset))
                 if resp.status_code != 200:
+                    print(f"⚠️ 获取字段偏移量 {offset} 时出错")
                     continue
                 all_fields.extend(resp.json()['results'])
 
-            # 过滤矩阵类型字段
+            # 过滤矩阵类型字段（WorldQuant Brain中通常使用的是MATRIX类型字段）
             matrix_fields = [
                 field['id'] for field in all_fields
                 if field.get('type') == 'MATRIX'
             ]
+            
+            # 如果没有MATRIX类型字段，尝试获取所有字段
+            if not matrix_fields:
+                print("⚠️ 未找到MATRIX类型字段，尝试获取所有可用字段...")
+                matrix_fields = [field['id'] for field in all_fields]
 
             if not matrix_fields:
                 print("❌ 未找到可用的数据字段")
