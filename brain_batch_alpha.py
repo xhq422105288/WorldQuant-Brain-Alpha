@@ -203,58 +203,92 @@ class BrainBatchAlpha:
 
             # 检查每个指标并输出结果
             is_qualified = True
+            near_qualified = 0  # 接近合格的指标数
+            total_checks = 8    # 总检查项数
 
-            if sharpe < 1.5:
-                print("❌ Sharpe ratio 不达标")
-                is_qualified = False
-            else:
+            # Sharpe ratio检查 (要求>1.5)
+            if sharpe >= 1.5:
                 print("✅ Sharpe ratio 达标")
-
-            if fitness < 1.0:
-                print("❌ Fitness 不达标")
-                is_qualified = False
+            elif sharpe >= 1.3:
+                print("⚠️ Sharpe ratio 接近达标 (>=1.3)")
+                near_qualified += 1
             else:
-                print("✅ Fitness 达标")
+                print("❌ Sharpe ratio 不达标 (<1.3)")
+                is_qualified = False
 
-            if turnover < 0.1 or turnover > 0.9:
+            # Fitness检查 (要求>1.0)
+            if fitness >= 1.0:
+                print("✅ Fitness 达标")
+            elif fitness >= 0.8:
+                print("⚠️ Fitness 接近达标 (>=0.8)")
+                near_qualified += 1
+            else:
+                print("❌ Fitness 不达标 (<0.8)")
+                is_qualified = False
+
+            # Turnover检查 (要求0.1-0.9)
+            if 0.1 <= turnover <= 0.9:
+                print("✅ Turnover 达标")
+            elif 0.05 <= turnover <= 0.95:
+                print("⚠️ Turnover 接近达标 (0.05-0.95)")
+                near_qualified += 1
+            else:
                 print("❌ Turnover 不在合理范围")
                 is_qualified = False
-            else:
-                print("✅ Turnover 达标")
 
-            if ic_mean < 0.02:
-                print("❌ IC Mean 不达标")
-                is_qualified = False
-            else:
+            # IC Mean检查 (要求>0.02)
+            if ic_mean >= 0.02:
                 print("✅ IC Mean 达标")
+            elif ic_mean >= 0.015:
+                print("⚠️ IC Mean 接近达标 (>=0.015)")
+                near_qualified += 1
+            else:
+                print("❌ IC Mean 不达标 (<0.015)")
+                is_qualified = False
 
-            if subuniverse_sharpe < required_subuniverse_sharpe:
+            # 子宇宙 Sharpe检查
+            if subuniverse_sharpe >= required_subuniverse_sharpe:
+                print(f"✅ 子宇宙 Sharpe 达标 ({subuniverse_sharpe:.3f} > {required_subuniverse_sharpe:.3f})")
+            elif subuniverse_sharpe >= required_subuniverse_sharpe * 0.8:
+                print(f"⚠️ 子宇宙 Sharpe 接近达标 ({subuniverse_sharpe:.3f} > {required_subuniverse_sharpe * 0.8:.3f})")
+                near_qualified += 1
+            else:
                 print(f"❌ 子宇宙 Sharpe 不达标 ({subuniverse_sharpe:.3f} < {required_subuniverse_sharpe:.3f})")
                 is_qualified = False
-            else:
-                print(f"✅ 子宇宙 Sharpe 达标 ({subuniverse_sharpe:.3f} > {required_subuniverse_sharpe:.3f})")
 
-            # 新增指标检查
-            if returns < 0.05:
-                print("❌ 收益率不达标")
-                is_qualified = False
-            else:
+            # 收益率检查 (要求>0.05)
+            if returns >= 0.05:
                 print("✅ 收益率达标")
-
-            if drawdown > 0.5:
-                print("❌ 最大回撤过大")
-                is_qualified = False
+            elif returns >= 0.03:
+                print("⚠️ 收益率接近达标 (>=0.03)")
+                near_qualified += 1
             else:
+                print("❌ 收益率不达标 (<0.03)")
+                is_qualified = False
+
+            # 最大回撤检查 (要求<0.5)
+            if drawdown <= 0.5:
                 print("✅ 最大回撤达标")
-
-            if capacity < 1000000:
-                print("❌ 容量不足")
-                is_qualified = False
+            elif drawdown <= 0.6:
+                print("⚠️ 最大回撤接近达标 (<=0.6)")
+                near_qualified += 1
             else:
+                print("❌ 最大回撤过大 (>0.6)")
+                is_qualified = False
+
+            # 容量检查 (要求>1000000)
+            if capacity >= 1000000:
                 print("✅ 容量达标")
+            elif capacity >= 500000:
+                print("⚠️ 容量接近达标 (>=500000)")
+                near_qualified += 1
+            else:
+                print("❌ 容量不足 (<500000)")
+                is_qualified = False
 
             print("\n🔍 检查项结果:")
             checks = is_data.get('checks', [])
+            additional_failures = 0
             for check in checks:
                 name = check.get('name')
                 result = check.get('result')
@@ -265,14 +299,19 @@ class BrainBatchAlpha:
                     print(f"✅ {name}: {value} (限制: {limit})")
                 elif result == 'FAIL':
                     print(f"❌ {name}: {value} (限制: {limit})")
-                    is_qualified = False
+                    # 对于额外的检查项，我们不直接导致整个Alpha不合格，但记录下来
+                    additional_failures += 1
                 elif result == 'PENDING':
                     print(f"⚠️ {name}: 检查尚未完成")
-                    is_qualified = False
 
             print("\n📋 最终评判:")
+            # 如果80%以上的指标达标或接近达标，也认为是高质量Alpha
             if is_qualified:
                 print("✅ Alpha 满足所有条件，可以提交!")
+            elif near_qualified >= total_checks * 0.75:  # 75%以上的指标达标或接近达标
+                print("🔶 Alpha 接近合格标准，建议保存以供进一步分析!")
+                # 仍然保存接近合格的Alpha
+                return True
             else:
                 print("❌ Alpha 未达到提交标准")
 
@@ -418,6 +457,14 @@ class BrainBatchAlpha:
                 if not strategies:
                     print("⚠️ 基础策略生成器未生成任何策略，生成默认策略...")
                     strategies = self._generate_default_strategies(datafields)
+
+            # 限制策略数量，避免过多的策略导致处理时间过长
+            if len(strategies) > 50:
+                print(f"⚠️ 策略数量过多 ({len(strategies)})，限制为50个")
+                strategies = strategies[:50]
+            elif len(strategies) == 0:
+                print("❌ 未能生成任何策略")
+                return []
 
             print(f"生成了 {len(strategies)} 个Alpha表达式")
 

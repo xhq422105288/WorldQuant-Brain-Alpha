@@ -163,7 +163,10 @@ class OptimizedAlphaStrategy:
                 "group_rank((close - open)/open, subindustry)",
                 "group_rank((open - delay(close, 1))/delay(close, 1), subindustry)",
                 "group_rank((high - low)/open, subindustry)",
-                "group_rank((close/delay(close, 5) - 1), subindustry)"
+                "group_rank((close/delay(close, 5) - 1), subindustry)",
+                # 添加更多基础因子
+                "group_rank((close - vwap)/close, subindustry)",
+                "ts_rank(abs(close/delay(close,1)-1)*volume/sharesout, 10)"
             ])
 
             # 波动率和风险调整因子
@@ -171,7 +174,10 @@ class OptimizedAlphaStrategy:
                 f"power(ts_std_dev(abs({field}), 30), 2) - power(ts_std_dev({field}, 30), 2)",
                 f"group_rank(std({field}, 20)/mean({field}, 20) * (1/cap), subindustry)",
                 f"ts_std_dev({field}, 10) / ts_std_dev({field}, 60) - 1",
-                f"zscore({field}) / ts_std_dev({field}, 20)"
+                f"zscore({field}) / ts_std_dev({field}, 20)",
+                # 添加更多波动率因子
+                f"ts_rank(ts_std_dev({field}, 5), 10) / ts_rank(ts_std_dev({field}, 60), 10)",
+                f"ts_zscore({field}, 10) - ts_zscore({field}, 20)"
             ])
 
             # 成交量相关因子
@@ -180,7 +186,10 @@ class OptimizedAlphaStrategy:
                     "group_rank((volume/sharesout - mean(volume/sharesout, 20))/std(volume/sharesout, 20), subindustry)",
                     "ts_corr(volume/sharesout, abs(returns), 10)",
                     f"group_rank(ts_corr({field}/sharesout, returns, 10), subindustry)",
-                    f"ts_rank({field}/mean({field}, 20), 10) - 1"
+                    f"ts_rank({field}/mean({field}, 20), 10) - 1",
+                    # 添加更多成交量因子
+                    f"ts_rank(volume/sharesout * sign(close - open), 10)",
+                    f"ts_rank(volume/sharesout / ts_mean(volume/sharesout, 20), 10)"
                 ])
 
             # 市场微观结构因子
@@ -188,7 +197,10 @@ class OptimizedAlphaStrategy:
                 f"group_neutralize(power(rank({field} - group_mean({field}, 1, subindustry)), 3), bucket(rank(cap), range='0,1,0.1'))",
                 f"group_rank(correlation({field}, volume/sharesout, 20), subindustry)",
                 f"group_rank(ts_rank({field}/cap, 10), subindustry)",
-                f"rank({field}) * (1/ts_rank(cap, 10))"
+                f"rank({field}) * (1/ts_rank(cap, 10))",
+                # 添加更多微观结构因子
+                f"ts_rank({field}/delay({field}, 1) - 1, 10) * ts_rank(volume/sharesout, 10)",
+                f"ts_zscore({field}, 10) * sign(ts_rank(returns, 10))"
             ])
 
             # 条件触发因子
@@ -196,7 +208,20 @@ class OptimizedAlphaStrategy:
                 f"trade_when(ts_rank(ts_std_dev(returns, 10), 252) < 0.9, {field}, -1)",
                 f"trade_when(volume > mean(volume, 20), {field}, -1)",
                 f"if_else(ts_rank({field}, 20) > 0.8, {field}, -{field})",
-                f"if_else(ts_rank({field}, 5) > 0.9, -1, 1) * {field}"
+                f"if_else(ts_rank({field}, 5) > 0.9, -1, 1) * {field}",
+                # 添加更多条件因子
+                f"if_else(ts_rank({field}, 10) > 0.75, ts_rank({field}, 5), -ts_rank({field}, 5))",
+                f"trade_when(ts_rank({field}, 20) > 0.9, sign(returns), -1)"
+            ])
+
+        # 添加一些跨字段策略
+        if len(datafields) >= 2:
+            f1, f2 = datafields[0], datafields[1]
+            strategies.extend([
+                f"ts_rank({f1}/{f2}, 10)",
+                f"group_neutralize({f1} * {f2}, subindustry)",
+                f"ts_corr({f1}, {f2}, 20)",
+                f"sign(ts_corr({f1}, returns, 10)) * ts_rank({f2}, 10)"
             ])
 
         return strategies
