@@ -182,7 +182,8 @@ class OptimizedAlphaStrategy:
             strategies.extend([
                 f"power(ts_std_dev(abs({field}), 30), 2) - power(ts_std_dev({field}, 30), 2)",
                 f"group_rank(std({field}, 20)/mean({field}, 20) * (1/cap), subindustry)",
-                f"ts_std_dev({field}, 10) / ts_std_dev({field}, 60) - 1",
+                # 修改时间窗口从10/60改为20/120
+                f"ts_std_dev({field}, 20) / ts_std_dev({field}, 120) - 1",
                 f"zscore({field}) / ts_std_dev({field}, 20)"
             ])
 
@@ -268,6 +269,8 @@ class OptimizedAlphaStrategy:
                 
                 # 动态中性化
                 f"group_neutralize({field}, subindustry) * (1 + ts_rank(volatility, 20))",
+                # 新增波动率风险控制
+                f"group_neutralize({field}, subindustry) / (1 + ts_std_dev(returns, 20))",
                 
                 # 创新性组合
                 f"ts_rank(log(abs({field} + 1)), 10)"

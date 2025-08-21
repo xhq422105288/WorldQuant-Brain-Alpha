@@ -134,6 +134,14 @@ def main():
             # 显示数据集使用建议
             print_dataset_tips(dataset_name)
 
+            # 添加默认数据集推荐
+            print("📌 推荐选择: 4 (mixed_pv_fund) 或 5 (mixed_analyst_fund)")
+            dataset_index = input("请选择数据集编号 (默认4): ") or "4"
+            dataset_name = get_dataset_by_index(dataset_index)
+            if not dataset_name:
+                print("❌ 无效的数据集编号")
+                return
+
             print("\n📈 可用策略模式:")
             print("1: 基础策略模式")
             print("2: 多因子组合模式")
