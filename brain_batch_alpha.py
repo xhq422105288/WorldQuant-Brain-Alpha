@@ -405,6 +405,19 @@ class BrainBatchAlpha:
             # 对于所有策略模式，都使用优化策略生成器并传入历史结果
             strategies = self.optimized_strategy_generator.get_optimized_simulation_data(
                 datafields, strategy_mode, previous_results)
+            
+            # 如果优化策略生成器没有返回任何策略，则使用基础策略生成器作为备选方案
+            if not strategies:
+                print("⚠️ 优化策略生成器未生成任何策略，使用基础策略生成器...")
+                # 初始化策略生成器
+                strategy_generator = AlphaStrategy()
+                # 生成策略列表
+                strategies = strategy_generator.get_simulation_data(datafields, strategy_mode)
+                
+                # 如果仍然没有策略，则生成一些默认策略
+                if not strategies:
+                    print("⚠️ 基础策略生成器未生成任何策略，生成默认策略...")
+                    strategies = self._generate_default_strategies(datafields)
 
             print(f"生成了 {len(strategies)} 个Alpha表达式")
 
@@ -435,8 +448,53 @@ class BrainBatchAlpha:
 
         except Exception as e:
             print(f"❌ 生成 Alpha 列表失败: {str(e)}")
-            return []
+            # 出错时生成默认策略
+            try:
+                default_strategies = self._generate_default_strategies(datafields if datafields else [])
+                alpha_list = []
+                for strategy in default_strategies:
+                    simulation_data = {
+                        'type': 'REGULAR',
+                        'settings': {
+                            'instrumentType': 'EQUITY',
+                            'region': 'USA',
+                            'universe': 'TOP3000',
+                            'delay': 1,
+                            'decay': 0,
+                            'neutralization': 'SUBINDUSTRY',
+                            'truncation': 0.08,
+                            'pasteurization': 'ON',
+                            'unitHandling': 'VERIFY',
+                            'nanHandling': 'ON',
+                            'language': 'FASTEXPR',
+                            'visualization': False,
+                        },
+                        'regular': strategy
+                    }
+                    alpha_list.append(simulation_data)
+                return alpha_list
+            except:
+                return []
             
+    def _generate_default_strategies(self, datafields):
+        """生成默认策略，确保始终有策略可以测试"""
+        default_strategies = [
+            "group_rank((close - open)/open, subindustry)",
+            "group_rank((open - delay(close, 1))/delay(close, 1), subindustry)",
+            "group_rank((high - low)/open, subindustry)"
+        ]
+        
+        # 如果有数据字段，添加一些基于数据字段的策略
+        if datafields:
+            field = datafields[0] if datafields else "close"
+            default_strategies.extend([
+                f"group_rank(({field} - delay({field}, 1))/{field}, subindustry)",
+                f"ts_rank({field}/mean({field}, 20), 10)",
+                f"ts_rank(ts_std_dev({field}, 10), 10)"
+            ])
+            
+        return default_strategies
+
     def _save_alpha_id(self, alpha_id, alpha_data):
         """保存 Alpha ID 到文件"""
         try:

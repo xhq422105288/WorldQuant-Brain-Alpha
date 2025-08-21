@@ -15,12 +15,16 @@ class OptimizedAlphaStrategy:
         """根据历史表现优化生成策略列表"""
         
         # 即使没有历史结果也使用优化生成器
-        if previous_results:
+        if previous_results and len(previous_results) > 0:
             # 根据历史结果优化策略
             return self.generate_optimized_strategy(datafields, previous_results)
         else:
             # 首次生成策略，但仍使用优化方法
-            return self.generate_initial_optimized_strategy(datafields, mode)
+            strategies = self.generate_initial_optimized_strategy(datafields, mode)
+            # 确保至少生成一些策略
+            if not strategies:
+                strategies = self.generate_basic_optimized_strategy(datafields)
+            return strategies
             
     def generate_initial_optimized_strategy(self, datafields, mode=1):
         """首次生成优化策略"""
@@ -68,8 +72,12 @@ class OptimizedAlphaStrategy:
         strategies.extend(self.generate_exploration_strategies(datafields))
         
         # 如果没有生成足够的策略，使用初始策略补充
-        if len(strategies) < 10:
+        if len(strategies) < 5:  # 至少生成5个策略
             strategies.extend(self.generate_basic_optimized_strategy(datafields))
+            
+        # 确保至少有一些策略
+        if not strategies:
+            strategies = self.generate_basic_optimized_strategy(datafields)
             
         return strategies
 
