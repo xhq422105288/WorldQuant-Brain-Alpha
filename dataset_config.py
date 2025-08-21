@@ -21,6 +21,10 @@ DATASET_CONFIGS = {
             'assets', 'liabilities', 'revenue', 'netincome',
             'cash', 'debt', 'equity', 'eps', 'pe_ratio',
             'pb_ratio', 'market_cap', 'dividend_yield'
+        ],
+        'default_fields': [
+            'pe_ratio', 'pb_ratio', 'market_cap', 'eps', 
+            'revenue', 'netincome', 'assets', 'liabilities'
         ]
     },
     'analyst4': {
@@ -42,6 +46,10 @@ DATASET_CONFIGS = {
         'fields': [
             'anl4_tbvps_low', 'anl4_tbvps_high',
             'anl4_tbvps_mean', 'anl4_tbvps_median'
+        ],
+        'default_fields': [
+            'anl4_tbvps_mean', 'anl4_tbvps_median', 
+            'anl4_tbvps_high', 'anl4_tbvps_low'
         ]
     },
     'pv1': {
@@ -63,6 +71,10 @@ DATASET_CONFIGS = {
         'fields': [
             'volume', 'close', 'open', 'high', 'low',
             'vwap', 'returns', 'turnover', 'volatility'
+        ],
+        'default_fields': [
+            'close', 'open', 'high', 'low', 'volume',
+            'returns', 'vwap', 'turnover'
         ]
     },
     # 添加混合数据集支持
@@ -90,6 +102,11 @@ DATASET_CONFIGS = {
             'assets', 'liabilities', 'revenue', 'netincome',
             'cash', 'debt', 'equity', 'eps', 'pe_ratio',
             'pb_ratio', 'market_cap', 'dividend_yield'
+        ],
+        'default_fields': [
+            'close', 'open', 'high', 'low', 'volume',
+            'returns', 'vwap', 'turnover', 'pe_ratio', 
+            'pb_ratio', 'market_cap', 'eps', 'revenue'
         ]
     },
     'mixed_analyst_fund': {
@@ -116,6 +133,11 @@ DATASET_CONFIGS = {
             'assets', 'liabilities', 'revenue', 'netincome',
             'cash', 'debt', 'equity', 'eps', 'pe_ratio',
             'pb_ratio', 'market_cap', 'dividend_yield'
+        ],
+        'default_fields': [
+            'anl4_tbvps_mean', 'anl4_tbvps_median',
+            'pe_ratio', 'pb_ratio', 'market_cap', 'eps',
+            'revenue', 'netincome'
         ]
     }
 }
@@ -157,6 +179,13 @@ def get_api_settings(dataset_name):
     
     config = DATASET_CONFIGS.get(dataset_name)
     return config['api_settings'] if config else None
+
+
+def get_default_fields(dataset_name):
+    """获取指定数据集的默认字段"""
+    
+    config = DATASET_CONFIGS.get(dataset_name)
+    return config.get('default_fields', []) if config else []
 
 
 def get_dataset_recommendation(dataset_name):

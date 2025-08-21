@@ -480,16 +480,42 @@ class BrainBatchAlpha:
                 "&limit=50&offset={offset}"
             )
 
+            print(f"🔍 正在获取数据集 '{dataset_name}' 的字段信息...")
+            
             # 获取总数
             initial_resp = self.session.get(url_template.format(offset=0))
             if initial_resp.status_code != 200:
-                print("❌ 获取数据字段失败")
-                print(f"HTTP状态码: {initial_resp.status_code}")
-                print(f"响应内容: {initial_resp.text}")
-                return None
+                print("⚠️ 获取数据字段失败，尝试使用配置中的默认字段...")
+                default_fields = config.get('default_fields', [])
+                if default_fields:
+                    print(f"✅ 使用配置中的默认字段: {', '.join(default_fields)}")
+                    return default_fields
+                else:
+                    # 使用全局默认字段
+                    fallback_fields = [
+                        'close', 'open', 'high', 'low', 'volume', 
+                        'returns', 'vwap', 'turnover', 'cap', 'market_cap'
+                    ]
+                    print(f"⚠️ 使用全局默认字段: {', '.join(fallback_fields)}")
+                    return fallback_fields
 
-            total_count = initial_resp.json()['count']
+            total_count = initial_resp.json().get('count', 0)
             print(f"📊 数据集 {dataset_name} 总共有 {total_count} 个字段")
+
+            if total_count == 0:
+                print("⚠️ 数据集没有任何字段，尝试使用配置中的默认字段...")
+                default_fields = config.get('default_fields', [])
+                if default_fields:
+                    print(f"✅ 使用配置中的默认字段: {', '.join(default_fields)}")
+                    return default_fields
+                else:
+                    # 使用全局默认字段
+                    fallback_fields = [
+                        'close', 'open', 'high', 'low', 'volume', 
+                        'returns', 'vwap', 'turnover', 'cap', 'market_cap'
+                    ]
+                    print(f"⚠️ 使用全局默认字段: {', '.join(fallback_fields)}")
+                    return fallback_fields
 
             # 获取所有数据字段
             all_fields = []
@@ -498,29 +524,77 @@ class BrainBatchAlpha:
                 if resp.status_code != 200:
                     print(f"⚠️ 获取字段偏移量 {offset} 时出错")
                     continue
-                all_fields.extend(resp.json()['results'])
+                resp_data = resp.json()
+                if 'results' in resp_data:
+                    all_fields.extend(resp_data['results'])
+                else:
+                    print(f"⚠️ 响应中没有找到 'results' 字段，偏移量: {offset}")
 
-            # 过滤矩阵类型字段（WorldQuant Brain中通常使用的是MATRIX类型字段）
-            matrix_fields = [
-                field['id'] for field in all_fields
-                if field.get('type') == 'MATRIX'
-            ]
+            # 尝试多种方式获取字段
+            matrix_fields = []
+            numeric_fields = []
+            all_field_ids = []
             
-            # 如果没有MATRIX类型字段，尝试获取所有字段
-            if not matrix_fields:
-                print("⚠️ 未找到MATRIX类型字段，尝试获取所有可用字段...")
-                matrix_fields = [field['id'] for field in all_fields]
+            for field in all_fields:
+                field_id = field.get('id')
+                field_type = field.get('type')
+                
+                if field_id:
+                    all_field_ids.append(field_id)
+                    
+                if field_type == 'MATRIX':
+                    matrix_fields.append(field_id)
+                elif field_type == 'FLOAT' or field_type == 'INTEGER':
+                    numeric_fields.append(field_id)
 
-            if not matrix_fields:
-                print("❌ 未找到可用的数据字段")
+            # 按优先级选择字段
+            selected_fields = []
+            if matrix_fields:
+                selected_fields = matrix_fields
+                print(f"✅ 找到 {len(matrix_fields)} 个MATRIX类型字段")
+            elif numeric_fields:
+                selected_fields = numeric_fields[:20]  # 限制数量
+                print(f"✅ 找到 {len(numeric_fields)} 个数值类型字段，使用前20个")
+            elif all_field_ids:
+                selected_fields = all_field_ids[:20]  # 限制数量
+                print(f"✅ 找到 {len(all_field_ids)} 个字段，使用前20个")
+            else:
+                # 使用数据集配置中的默认字段
+                default_fields = config.get('default_fields', [])
+                if default_fields:
+                    selected_fields = default_fields
+                    print(f"⚠️ 未找到合适的字段，使用配置中的默认字段: {', '.join(default_fields)}")
+                else:
+                    # 使用全局默认字段
+                    selected_fields = [
+                        'close', 'open', 'high', 'low', 'volume', 
+                        'returns', 'vwap', 'turnover', 'cap', 'market_cap'
+                    ]
+                    print(f"⚠️ 未找到合适的字段，使用全局默认字段: {', '.join(selected_fields)}")
+
+            if not selected_fields:
+                print("❌ 未能获取到任何可用的数据字段")
                 return None
 
-            print(f"✅ 获取到 {len(matrix_fields)} 个数据字段")
-            return matrix_fields
+            print(f"✅ 最终获取到 {len(selected_fields)} 个数据字段")
+            return selected_fields
 
         except Exception as e:
             print(f"❌ 获取数据字段时出错: {str(e)}")
-            return None
+            # 返回数据集配置中的默认字段作为最后的备选方案
+            config = get_dataset_config(dataset_name)
+            if config and 'default_fields' in config:
+                default_fields = config['default_fields']
+                print(f"⚠️ 使用数据集配置中的默认字段作为备选方案: {', '.join(default_fields)}")
+                return default_fields
+            else:
+                # 使用全局默认字段
+                fallback_fields = [
+                    'close', 'open', 'high', 'low', 'volume', 
+                    'returns', 'vwap', 'turnover', 'cap', 'market_cap'
+                ]
+                print(f"⚠️ 使用全局默认字段作为备选方案: {', '.join(fallback_fields)}")
+                return fallback_fields
 
     def _generate_alpha_list(self, datafields, strategy_mode, previous_results=None):
         """生成 Alpha 表达式列表"""
