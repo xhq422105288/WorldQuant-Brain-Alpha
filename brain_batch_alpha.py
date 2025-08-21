@@ -13,7 +13,7 @@ from requests.auth import HTTPBasicAuth
 from alpha_strategy import AlphaStrategy
 from optimized_alpha_strategy import OptimizedAlphaStrategy
 from alpha_history_manager_sqlite import AlphaHistoryManagerSQLite
-from dataset_config import get_api_settings, get_dataset_config
+from dataset_config import get_dataset_config
 
 
 class BrainBatchAlpha:

@@ -152,6 +152,13 @@ def get_dataset_fields(dataset_name):
     return config['fields'] if config else []
 
 
+def get_api_settings(dataset_name):
+    """获取指定数据集的API设置"""
+    
+    config = DATASET_CONFIGS.get(dataset_name)
+    return config['api_settings'] if config else None
+
+
 def get_dataset_recommendation(dataset_name):
     """获取数据集使用建议"""
     
